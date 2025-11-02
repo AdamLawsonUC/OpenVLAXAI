@@ -15,7 +15,7 @@ RUN apt-get update && \
       curl && \
     rm -rf /var/lib/apt/lists/*
 
-# make "python" available (nvidia entrypoint / your CMD calls python)
+# make "python" available
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN git lfs install
@@ -24,8 +24,6 @@ RUN git lfs install
 RUN python3 -m pip install --upgrade pip
 
 # 3) install a CUDA build of torch that matches what OpenVLA expects
-#    OpenVLA README says: Python 3.10, PyTorch 2.2.*.
-#    cu121 wheels work fine on A100.
 RUN pip install \
     torch==2.2.2 \
     torchvision==0.17.2 \
@@ -35,8 +33,7 @@ RUN pip install \
 RUN git clone https://github.com/openvla/openvla.git
 WORKDIR /workspace/openvla
 
-# 5) minimal deps from the repo (transformers, timm, tokenizers, ...)
-#    README tells us to "pip install -r requirements-min.txt" first.
+# 5) minimal deps from the repo
 RUN pip install -r requirements-min.txt
 
 # 6) install the repo itself (editable) so scripts work
@@ -46,16 +43,16 @@ RUN pip install -e .
 RUN pip install packaging ninja && \
     pip install "flash-attn==2.5.5" --no-build-isolation
 
-# 7b) install server dependencies for REST deployment
-RUN pip install fastapi uvicorn
+# 7b) server deps that deploy.py needs
+# deploy.py imports: uvicorn, fastapi, json_numpy, draccus  :contentReference[oaicite:1]{index=1}
+RUN pip install fastapi uvicorn json-numpy draccus
 
 # 8) expose the REST server
 EXPOSE 8000
 
 # default: serve the 7B model on 0.0.0.0:8000
+# deploy.py expects --openvla_path, not --model  :contentReference[oaicite:2]{index=2}
 CMD ["python", "vla-scripts/deploy.py", \
-     "--model", "openvla/openvla-7b", \
+     "--openvla_path", "openvla/openvla-7b", \
      "--host", "0.0.0.0", \
      "--port", "8000"]
-
-
