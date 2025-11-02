@@ -15,13 +15,16 @@ RUN apt-get update && \
       curl && \
     rm -rf /var/lib/apt/lists/*
 
+# make "python" available (nvidia entrypoint / your CMD calls python)
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
 RUN git lfs install
 
 # 2) python setup
 RUN python3 -m pip install --upgrade pip
 
 # 3) install a CUDA build of torch that matches what OpenVLA expects
-#    OpenVLA README says: Python 3.10, PyTorch 2.2.*. :contentReference[oaicite:5]{index=5}
+#    OpenVLA README says: Python 3.10, PyTorch 2.2.*.
 #    cu121 wheels work fine on A100.
 RUN pip install \
     torch==2.2.2 \
@@ -33,19 +36,19 @@ RUN git clone https://github.com/openvla/openvla.git
 WORKDIR /workspace/openvla
 
 # 5) minimal deps from the repo (transformers, timm, tokenizers, ...)
-#    README tells us to "pip install -r requirements-min.txt" first. :contentReference[oaicite:6]{index=6}
+#    README tells us to "pip install -r requirements-min.txt" first.
 RUN pip install -r requirements-min.txt
 
 # 6) install the repo itself (editable) so scripts work
 RUN pip install -e .
 
-# 7) flash-attn (OpenVLA explicitly recommends 2.5.5) :contentReference[oaicite:7]{index=7}
+# 7) flash-attn (OpenVLA explicitly recommends 2.5.5)
 RUN pip install packaging ninja && \
     pip install "flash-attn==2.5.5" --no-build-isolation
 
 # 8) expose the REST server
 #    Their README says they provide a "lightweight script for serving OpenVLA over a REST API"
-#    via `vla-scripts/deploy.py`. :contentReference[oaicite:8]{index=8}
+#    via `vla-scripts/deploy.py`.
 EXPOSE 8000
 
 # default: serve the 7B model on 0.0.0.0:8000
