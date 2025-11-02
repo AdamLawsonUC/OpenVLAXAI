@@ -46,9 +46,10 @@ RUN pip install -e .
 RUN pip install packaging ninja && \
     pip install "flash-attn==2.5.5" --no-build-isolation
 
+# 7b) install server dependencies for REST deployment
+RUN pip install fastapi uvicorn
+
 # 8) expose the REST server
-#    Their README says they provide a "lightweight script for serving OpenVLA over a REST API"
-#    via `vla-scripts/deploy.py`.
 EXPOSE 8000
 
 # default: serve the 7B model on 0.0.0.0:8000
@@ -56,3 +57,5 @@ CMD ["python", "vla-scripts/deploy.py", \
      "--model", "openvla/openvla-7b", \
      "--host", "0.0.0.0", \
      "--port", "8000"]
+
+
