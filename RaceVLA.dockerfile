@@ -39,6 +39,21 @@ RUN pip install -r requirements-min.txt
 # 6) install the repo itself (editable) so scripts work
 RUN pip install -e .
 
+# Robust: always load processor from base OpenVLA repo
+RUN sed -i \
+  "s|AutoProcessor.from_pretrained(self.openvla_path, trust_remote_code=True)|AutoProcessor.from_pretrained('openvla/openvla-7b', trust_remote_code=True)|" \
+  /workspace/openvla/vla-scripts/deploy.py
+
+
+# Upgrade HF stack (OpenVLA / remote processors need newer than 4.22)
+RUN pip install -U \
+    "transformers>=4.40.0" \
+    "huggingface_hub>=0.23.0" \
+    "accelerate>=0.28.0" \
+    "safetensors>=0.4.2" \
+    "tokenizers>=0.15.2"
+
+
 # 7) flash-attn (OpenVLA recommends 2.5.5)
 RUN pip install packaging ninja && \
     pip install "flash-attn==2.5.5" --no-build-isolation
