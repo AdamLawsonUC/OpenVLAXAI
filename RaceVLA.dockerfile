@@ -59,7 +59,7 @@ RUN pip install -U --no-cache-dir \
     "transformers==4.49.0" \
     "huggingface_hub==0.26.2" \
     "accelerate==0.34.2" \
-    "tokenizers==0.20.3" \
+    "tokenizers==0.21.0" \
     "safetensors>=0.4.2"
 
 RUN python -c "import torch, transformers; print('torch', torch.__version__); print('transformers', transformers.__version__)"
