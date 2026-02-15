@@ -51,6 +51,33 @@ RUN pip install -e .
 RUN sed -i \
   "s|AutoProcessor.from_pretrained(self.openvla_path, trust_remote_code=True)|AutoProcessor.from_pretrained('openvla/openvla-7b', trust_remote_code=True)|" \
   /workspace/openvla/vla-scripts/deploy.py
+    # Don't hard-require dataset_statistics.json (RaceVLA folder may not include it)
+RUN python - <<'PY'
+from pathlib import Path
+p = Path("/workspace/openvla/vla-scripts/deploy.py")
+t = p.read_text()
+old = "with open(Path(self.openvla_path) / \"dataset_statistics.json\", \"r\") as f:"
+if old not in t:
+    print("pattern not found; deploy.py changed upstream")
+    raise SystemExit(1)
+t = t.replace(
+    old,
+    "stats_path = Path(self.openvla_path) / \"dataset_statistics.json\"\n"
+    "        if stats_path.exists():\n"
+    "            with open(stats_path, \"r\") as f:"
+)
+# also ensure there's an else that sets something sane
+# insert right after the json.load line if present
+needle = "self.dataset_statistics = json.load(f)"
+if needle in t and "else:\n            print" not in t:
+    t = t.replace(
+        needle,
+        needle + "\n        else:\n            print(f\"[WARN] dataset_statistics.json not found at {stats_path}. Continuing without it.\")\n            self.dataset_statistics = None"
+    )
+p.write_text(t)
+print("patched dataset_statistics handling")
+PY
+
 
 
 # Upgrade HF stack (OpenVLA / remote processors need newer than 4.22)
