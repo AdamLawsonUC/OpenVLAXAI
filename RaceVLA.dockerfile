@@ -37,6 +37,13 @@ WORKDIR /workspace/openvla
 # 5) minimal deps from the repo
 RUN pip install -r requirements-min.txt
 
+# requirements-min can sometimes pull different versions; re-assert torch/vision
+RUN pip install --no-cache-dir \
+    torch==2.4.1 \
+    torchvision==0.19.1 \
+    --index-url https://download.pytorch.org/whl/cu121
+
+
 # 6) install the repo itself (editable) so scripts work
 RUN pip install -e .
 
@@ -47,12 +54,20 @@ RUN sed -i \
 
 
 # Upgrade HF stack (OpenVLA / remote processors need newer than 4.22)
-RUN pip install -U \
-    "transformers>=4.40.0" \
-    "huggingface_hub>=0.23.0" \
-    "accelerate>=0.28.0" \
-    "safetensors>=0.4.2" \
-    "tokenizers>=0.15.2"
+# Upgrade + pin HF stack (stable with torch 2.4.x)
+RUN pip install -U --no-cache-dir \
+    "transformers==4.49.0" \
+    "huggingface_hub==0.26.2" \
+    "accelerate==0.34.2" \
+    "tokenizers==0.20.3" \
+    "safetensors>=0.4.2"
+
+RUN python -c "import torch, transformers; print('torch', torch.__version__); print('transformers', transformers.__version__)"
+
+
+# server deps that deploy.py needs
+RUN pip install --no-cache-dir fastapi uvicorn json-numpy draccus
+
 
 
 # 7) flash-attn (OpenVLA recommends 2.5.5)
