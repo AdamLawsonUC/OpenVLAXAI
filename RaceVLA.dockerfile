@@ -24,10 +24,11 @@ RUN git lfs install
 RUN python3 -m pip install --upgrade pip
 
 # 3) install a CUDA build of torch
-RUN pip install \
-    torch==2.2.2 \
-    torchvision==0.17.2 \
+RUN pip install --no-cache-dir \
+    torch==2.4.1 \
+    torchvision==0.19.1 \
     --index-url https://download.pytorch.org/whl/cu121
+
 
 # 4) clone openvla (we'll still use their deploy.py server)
 RUN git clone https://github.com/openvla/openvla.git
